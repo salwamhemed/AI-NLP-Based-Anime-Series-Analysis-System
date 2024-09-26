@@ -1,6 +1,7 @@
 import gradio as gr
 import pandas as pd
 from theme_classification import theme_classifier
+from characters_network import CharactersNetworkGenerator, NamedEntityRecognizer
 
 def get_themes(theme_list_str, subtitles_path, save_path):
     theme_list = theme_list_str.split(',')
@@ -17,6 +18,17 @@ def get_themes(theme_list_str, subtitles_path, save_path):
     output_df.columns = ['Theme', 'Score']
 
     return output_df
+
+def get_characters_network(subtitles_path, ner_path):
+    characters = CharactersNetworkGenerator()
+    ner = NamedEntityRecognizer()
+    
+    ner_df = ner.get_ners(subtitles_path, ner_path)
+    characters_df = characters.generate_character_network(ner_df)
+    html = characters.draw_characters_network(characters_df)
+
+    return html 
+
 
 def main():
     with gr.Blocks() as demo:
@@ -37,6 +49,19 @@ def main():
                             return gr.BarPlot.update(data=output_df)
 
                         get_themes_button.click(update_plot, inputs=[theme_list, data_path, save_path], outputs=[plot])
+        with gr.Row():
+            with gr.Column():
+                gr.HTML("<h1>Characters Network </h1>")
+                with gr.Row():
+                    with gr.Column():
+                        hxh_html = gr.HTML()
+                    with gr.Column():
+                        data_path = gr.Textbox(label='Script path')
+                        Ner_save_path = gr.Textbox(label='Ners Save Path')
+                        get_characters_network_button = gr.Button("Get Characters Network Graph")
+                        get_characters_network_button.click(get_characters_network, inputs=[data_path, Ner_save_path], outputs=[hxh_html])
+
+                        
 
     demo.launch(share=True)
 
